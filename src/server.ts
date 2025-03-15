@@ -81,6 +81,10 @@ app.post(
   "/webhook/payment",
   async (req: Request<{}, {}, any>, res: Response): Promise<void> => {
     try {
+      logger.info(
+        "📩 Получены данные вебхука:",
+        JSON.stringify(req.body, null, 2)
+      );
       const secretKey = config.secretKey!;
       const signatureHeader =
         (req.headers["sign"] as string) || (req.headers["Sign"] as string);

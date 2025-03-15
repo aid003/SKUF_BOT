@@ -10,7 +10,7 @@ dotenv.config();
 
 const app: Application = express();
 
-// Используем express.urlencoded() вместо express.raw(), чтобы парсить application/x-www-form-urlencoded
+// Используем express.urlencoded() для обработки application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
@@ -49,7 +49,15 @@ function mapPaymentMethod(
 }
 
 /**
- * 🔹 Обработка webhook оплаты от Продамус (исправлено парсинг данных)
+ * 🔹 Функция извлечения user_id из order_num
+ */
+function extractUserId(orderNum: string): string | null {
+  const match = orderNum.match(/^order_(\d+)_\d+$/);
+  return match ? match[1] : null;
+}
+
+/**
+ * 🔹 Обработка webhook оплаты от Продамус (исправлено извлечение user_id)
  */
 app.post(
   "/webhook/payment",
@@ -57,9 +65,13 @@ app.post(
     try {
       logger.info("📩 Получены данные вебхука:", req.body);
 
-      const { order_id, sum, payment_status, user_id, payment_type } = req.body;
+      const { order_id, order_num, sum, payment_status, payment_type } =
+        req.body;
 
-      if (!order_id || !sum || !payment_status || !user_id) {
+      // Если user_id отсутствует в вебхуке, извлекаем его из order_num
+      let userId = extractUserId(order_num);
+
+      if (!order_id || !sum || !payment_status || !userId) {
         logger.warn(
           "⚠️ Некорректные данные в запросе (отсутствуют ключевые поля)."
         );
@@ -67,13 +79,6 @@ app.post(
         return;
       }
 
-      if (typeof user_id !== "string" || !/^\d+$/.test(user_id)) {
-        logger.warn(`⚠️ user_id не является корректным числом: ${user_id}`);
-        res.status(400).send("Invalid user_id");
-        return;
-      }
-
-      const userId = BigInt(user_id);
       const parsedAmount = parseFloat(sum);
 
       if (isNaN(parsedAmount)) {
@@ -82,7 +87,12 @@ app.post(
         return;
       }
 
-      const user = await prisma.telegramUser.findUnique({ where: { userId } });
+      // Приводим user_id к BigInt
+      const userIdBigInt = BigInt(userId);
+
+      const user = await prisma.telegramUser.findUnique({
+        where: { userId: userIdBigInt },
+      });
       if (!user) {
         logger.warn(`⚠️ Пользователь не найден: ${userId}`);
         res.status(404).send("User not found");
@@ -99,7 +109,7 @@ app.post(
             paymentMethod: paymentMethodEnum,
           },
           create: {
-            userId,
+            userId: userIdBigInt,
             orderId: order_id,
             amount: parsedAmount,
             status: payment_status.toUpperCase() as PaymentStatus,

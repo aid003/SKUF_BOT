@@ -98,23 +98,20 @@ export function setupStartCommand(bot: Telegraf) {
 
       const userId = BigInt(ctx.from.id);
       const orderId = `order_${userId}_${Date.now()}`;
-      // Берём сумму либо из config, либо по умолчанию 100:
-      const price = config.amount ? Number(config.amount) : 100;
+      const price = config.amount ? Number(config.amount) : 2000;
 
-      // Формируем ссылку с order_sum=... и do=link,
-      // чтобы НЕ перескакивать первый экран с контактами.
-      const paymentLink =
-        `${config.paymentUrl}?order_id=${orderId}` +
-        `&user_id=${userId}` +
-        `&order_sum=${price}` +
-        `&do=pay`;
-
-      const message =
-        `💳 *Оплата мероприятия*\n\n` +
-        `Для оплаты перейдите по ссылке: [Оплатить](${paymentLink})`;
-
-      // Создаём запись о платеже в БД
       try {
+        // Запрос на получение ссылки оплаты (do=link)
+        const paymentUrl = `${config.paymentUrl}?order_id=${orderId}&user_id=${userId}&order_sum=${price}&do=link`;
+
+        const response = await fetch(paymentUrl);
+        if (!response.ok) {
+          throw new Error(`Ошибка API Продамус: ${response.statusText}`);
+        }
+
+        const paymentLink = await response.text(); // Продамус возвращает URL как строку
+
+        // Создаём запись о платеже в БД
         await prisma.payment.create({
           data: {
             userId,
@@ -125,8 +122,8 @@ export function setupStartCommand(bot: Telegraf) {
           },
         });
 
-        // Отправляем ссылку
-        await ctx.reply(message, {
+        // Отправляем кнопку без текста ссылки
+        await ctx.reply("💳 *Оплата мероприятия*", {
           parse_mode: "MarkdownV2",
           ...Markup.inlineKeyboard([
             [Markup.button.url("💳 Оплатить", paymentLink)],
@@ -134,12 +131,15 @@ export function setupStartCommand(bot: Telegraf) {
         });
 
         logger.info(
-          `📩 Ссылка на оплату (do=link) отправлена пользователю ${userId}.`
+          `📩 Ссылка на оплату (do=link) отправлена пользователю ${userId}: ${paymentLink}`
         );
-      } catch (tgError: any) {
+      } catch (error: any) {
         logger.error(
-          "❌ Ошибка при создании платежа или отправке ссылки:",
-          tgError
+          "❌ Ошибка при создании платежа или получении ссылки:",
+          error
+        );
+        await ctx.reply(
+          "❌ Не удалось получить ссылку на оплату. Попробуйте позже."
         );
       }
 

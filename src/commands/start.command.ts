@@ -86,6 +86,9 @@ export function setupStartCommand(bot: Telegraf) {
     });
   });
 
+  /**
+   * Блок «Оплаты»: поправлен, чтобы передавать сумму в форму Продамуса через products.
+   */
   bot.action("pay", async (ctx) => {
     await safeExecute(ctx, async () => {
       if (!ctx.from) {
@@ -93,27 +96,38 @@ export function setupStartCommand(bot: Telegraf) {
         return;
       }
 
+      // Пусть сумма берётся из конфига или по умолчанию 2000:
       const userId = BigInt(ctx.from.id);
       const orderId = `order_${userId}_${Date.now()}`;
+      const price = config.amount ? Number(config.amount) : 2000;
 
-      // Формирование ссылки на оплату
-      const paymentLink = `${config.paymentUrl}?order_id=${orderId}&user_id=${userId}&do=pay`;
+      // Формируем ссылку с указанием цены, количества и названия товара.
+      // Пример:
+      //   https://your-subdomain.payform.ru/?order_id=...&user_id=...&products[0][price]=2000&products[0][quantity]=1&products[0][name]=Оплата+мероприятия&do=pay
+      const paymentLink =
+        `${config.paymentUrl}?order_id=${orderId}&user_id=${userId}` +
+        `&products[0][price]=${price}` +
+        `&products[0][quantity]=1` +
+        `&products[0][name]=ОплатаМероприятия` +
+        `&do=pay`;
 
       const message =
         `💳 *Оплата мероприятия*\n\n` +
         `Для оплаты перейдите по ссылке: [Оплатить](${paymentLink})`;
 
+      // Сохраняем предварительную запись о платеже в БД
       try {
         await prisma.payment.create({
           data: {
             userId,
             orderId,
-            amount: config.amount || 2000,
+            amount: price, // сохраняем цену
             status: PaymentStatus.PENDING,
             paymentMethod: null,
           },
         });
 
+        // Отправляем сообщение со ссылкой
         await ctx.reply(message, {
           parse_mode: "MarkdownV2",
           ...Markup.inlineKeyboard([
@@ -126,6 +140,7 @@ export function setupStartCommand(bot: Telegraf) {
         logger.error("❌ Ошибка при отправке ссылки на оплату:", tgError);
       }
 
+      // Закрываем "часики" на кнопке
       try {
         await ctx.answerCbQuery();
       } catch (tgError: any) {

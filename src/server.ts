@@ -1,6 +1,5 @@
 import express, { Request, Response, Application } from "express";
 import { PaymentStatus, PaymentMethod } from "@prisma/client";
-import crypto from "crypto";
 import cors from "cors";
 import { config } from "./config";
 import { bot, prisma } from ".";
@@ -8,13 +7,9 @@ import { logger } from "./logger/logger";
 
 const app: Application = express();
 
-// Используем express.raw(), чтобы получить оригинальное тело запроса
 app.use(express.raw({ type: "*/*" }));
 app.use(cors());
 
-/**
- * 🔹 Функция маппинга методов оплаты из Продамус в наше перечисление
- */
 function mapPaymentMethod(
   prodamusMethod: string | undefined
 ): PaymentMethod | null {
@@ -46,53 +41,10 @@ function mapPaymentMethod(
   }
 }
 
-/**
- * 🔹 Функция проверки подписи HMAC
- */
-const verifySignature = (
-  rawBody: string,
-  secretKey: string,
-  signature: string
-): boolean => {
-  try {
-    const hmac = crypto.createHmac("sha256", secretKey);
-    hmac.update(rawBody, "utf8"); // Используем оригинальное тело запроса
-    const computedSignature = hmac.digest("hex");
-
-    if (computedSignature !== signature) {
-      logger.warn(`⚠️ Подписи не совпадают! 
-      Ожидалось: ${signature} 
-      Получено: ${computedSignature}`);
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    logger.error("❌ Ошибка генерации HMAC:", error);
-    return false;
-  }
-};
-
-/**
- * 🔹 Обработка webhook оплаты от Продамус
- */
 app.post(
   "/webhook/payment",
-  async (req: Request<{}, {}, any>, res: Response): Promise<void> => {
+  async (req: Request, res: Response): Promise<void> => {
     try {
-      const secretKey = config.secretKey!;
-      const signatureHeader =
-        (req.headers["sign"] as string) || (req.headers["Sign"] as string);
-
-      if (
-        !signatureHeader ||
-        !verifySignature(req.body.toString("utf8"), secretKey, signatureHeader)
-      ) {
-        logger.warn("⚠️ Ошибка верификации подписи запроса.");
-        res.status(400).send("Invalid signature");
-        return;
-      }
-
       const rawBody = req.body.toString("utf8"); // Получаем оригинальное тело запроса
       logger.info("📩 Получены данные вебхука (RAW):", rawBody);
 
@@ -195,9 +147,6 @@ app.post(
   }
 );
 
-/**
- * 🔹 Запуск сервера
- */
 app.listen(config.port, () => {
   logger.info(`🚀 Webhook сервер запущен на порту ${config.port}`);
 });

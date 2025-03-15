@@ -4,6 +4,7 @@ import { setupCommands } from "./commands";
 import { setupBroadcast } from "./broadcast/broadcast";
 import { logger } from "./logger/logger";
 import { PrismaClient } from "@prisma/client";
+import "./server";
 
 if (!config.botToken) {
   logger.error("BOT_TOKEN не найден в конфигурации");
@@ -11,13 +12,13 @@ if (!config.botToken) {
 }
 
 export const prisma = new PrismaClient();
-const bot = new Telegraf(config.botToken);
+export const bot = new Telegraf(config.botToken);
 
 setupCommands(bot);
-
 setupBroadcast(bot);
 
-logger.info(`Бот успешно запущен на порту ${config.port}`);
+logger.info(`🚀 Бот успешно запущен`);
+
 bot.launch().catch((error) => {
   logger.error("Ошибка при запуске бота:", error);
   process.exit(1);

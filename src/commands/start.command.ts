@@ -4,6 +4,7 @@ import { logger } from "../logger/logger";
 import { safeExecute } from "../helpers/safeExecute";
 import { prisma } from "..";
 import { config } from "../config";
+import { PaymentStatus } from "@prisma/client";
 
 export function setupStartCommand(bot: Telegraf) {
   bot.start(async (ctx) => {
@@ -92,24 +93,44 @@ export function setupStartCommand(bot: Telegraf) {
         return;
       }
 
-      const paymentLink = "https://example.com/payment";
-      const message = `Для оплаты перейдите по ссылке: [Оплатить](${paymentLink})`;
+      const userId = BigInt(ctx.from.id);
+      const orderId = `order_${userId}_${Date.now()}`;
+
+      // Формирование ссылки на оплату
+      const paymentLink = `${config.paymentUrl}?order_id=${orderId}&user_id=${userId}&do=pay`;
+
+      const message =
+        `💳 *Оплата мероприятия*\n\n` +
+        `Для оплаты перейдите по ссылке: [Оплатить](${paymentLink})`;
 
       try {
-        await ctx.reply(message, { parse_mode: "MarkdownV2" });
+        await prisma.payment.create({
+          data: {
+            userId,
+            orderId,
+            amount: config.amount || 2000,
+            status: PaymentStatus.PENDING,
+            paymentMethod: null,
+          },
+        });
+
+        await ctx.reply(message, {
+          parse_mode: "MarkdownV2",
+          ...Markup.inlineKeyboard([
+            [Markup.button.url("💳 Оплатить", paymentLink)],
+          ]),
+        });
+
+        logger.info(`📩 Ссылка на оплату отправлена пользователю ${userId}.`);
       } catch (tgError: any) {
-        logger.error("Ошибка при отправке ссылки на оплату:", tgError);
+        logger.error("❌ Ошибка при отправке ссылки на оплату:", tgError);
       }
 
       try {
         await ctx.answerCbQuery();
       } catch (tgError: any) {
-        logger.warn("Ошибка при answerCbQuery:", tgError);
+        logger.warn("⚠️ Ошибка при answerCbQuery:", tgError);
       }
-
-      logger.info(
-        `Пользователь ${ctx.from.id} (${ctx.from.username}) нажал кнопку "Оплатить".`
-      );
     });
   });
 
@@ -176,27 +197,27 @@ export function setupStartCommand(bot: Telegraf) {
             hour12: true,
           });
 
-        const escapeMarkdownV2 = (text: string): string => {
+        const escapeMD = (text: string): string => {
           return text.replace(/([_*[\]()~`>#+\-=|{}.!\\])/g, "\\$1");
         };
 
         let message =
           `📅 *Ближайшее мероприятие*\n\n` +
-          `👉 *Тема:* ${escapeMarkdownV2(nextEvent.title)}\n` +
-          `⏱️ *Дата:* ${escapeMarkdownV2(formatDateTime(nextEvent.date))}\n`;
+          `👉 *Тема:* ${escapeMD(nextEvent.title)}\n` +
+          `⏱️ *Дата:* ${escapeMD(formatDateTime(nextEvent.date))}\n`;
 
         if (nextEvent.content) {
-          message += `📢 ${escapeMarkdownV2(nextEvent.content)}\n`;
+          message += `📢 ${escapeMD(nextEvent.content)}\n`;
         }
 
         if (otherEvents.length > 0) {
           message += `\n\n💼 *Другие мероприятия*\n`;
-          otherEvents.forEach((event: Announcement) => {
+          otherEvents.forEach((event) => {
             message +=
-              `\n👉 *Тема:* ${escapeMarkdownV2(event.title)}\n` +
-              `⏱️ *Дата:* ${escapeMarkdownV2(formatDateTime(event.date))}\n`;
+              `\n👉 *Тема:* ${escapeMD(event.title)}\n` +
+              `⏱️ *Дата:* ${escapeMD(formatDateTime(event.date))}\n`;
             if (event.content) {
-              message += `📢 ${escapeMarkdownV2(event.content)}\n`;
+              message += `📢 ${escapeMD(event.content)}\n`;
             }
           });
         }

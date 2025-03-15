@@ -20,8 +20,42 @@ model TelegramUser {
   messagesSentCount     Int     @default(0)
   role                  String  @default("client")
 
+  payments              Payment[]
+
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
   @@index([username])
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum PaymentMethod {
+  CARD
+  SBP
+  QIWI
+  YANDEX
+  PAYPAL
+  CRYPTO
+}
+
+model Payment {
+  id            BigInt        @id @default(autoincrement()) @db.BigInt
+  userId        BigInt        @db.BigInt
+  orderId       String        @unique
+  amount        Float
+  currency      String        @default("RUB")
+  status        PaymentStatus @default(PENDING) // pending, success, failed
+  paymentMethod PaymentMethod?
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user          TelegramUser  @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
 }

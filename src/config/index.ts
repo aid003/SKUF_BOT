@@ -8,5 +8,8 @@ export const config = {
   port: process.env.PORT || 5000,
   databaseUrl: process.env.DATABASE_URL,
   broadcastLimit: Number(process.env.BROADCAST_LIMIT),
-  strapiUrl: process.env.STRAPI_URL
+  strapiUrl: process.env.STRAPI_URL,
+  paymentUrl: process.env.PAYMENT_URL,
+  secretKey: process.env.PRODAMUS_SECRET_KEY,
+  amount: Number(process.env.AMOUNT),
 };

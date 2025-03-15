@@ -49,7 +49,7 @@ model Payment {
   orderId       String        @unique
   amount        Float
   currency      String        @default("RUB")
-  status        PaymentStatus @default(PENDING) // pending, success, failed
+  status        PaymentStatus @default(PENDING) 
   paymentMethod PaymentMethod?
 
   createdAt     DateTime      @default(now())

@@ -15,16 +15,16 @@ const escapeMarkdownV2_1 = require("../helpers/escapeMarkdownV2");
 const logger_1 = require("../logger/logger");
 const safeExecute_1 = require("../helpers/safeExecute");
 const __1 = require("..");
+const config_1 = require("../config");
+const client_1 = require("@prisma/client");
 function setupStartCommand(bot) {
     bot.start((ctx) => __awaiter(this, void 0, void 0, function* () {
         yield (0, safeExecute_1.safeExecute)(ctx, () => __awaiter(this, void 0, void 0, function* () {
             var _a, _b;
-            // Проверяем, что ctx.from существует
             if (!ctx.from) {
                 logger_1.logger.warn("ctx.from отсутствует при выполнении /start");
                 return;
             }
-            // Собираем данные о пользователе
             const userData = {
                 userId: BigInt(ctx.from.id),
                 isBot: ctx.from.is_bot,
@@ -64,7 +64,6 @@ function setupStartCommand(bot) {
                 yield ctx.reply("Произошла ошибка при регистрации. Попробуйте позже!");
                 return;
             }
-            // Отправляем приветственное сообщение
             const safeFirstName = (0, escapeMarkdownV2_1.escapeMarkdownV2)(ctx.from.first_name || "Гость");
             const message = `*${safeFirstName}*, на связи *Скуфы маркетинга*👋\n\n` +
                 `_Благодарю тебя за подписку, теперь ты не пропустишь самое важное\\!_\n\n` +
@@ -91,21 +90,36 @@ function setupStartCommand(bot) {
                 logger_1.logger.warn("Нажата кнопка 'pay', но ctx.from отсутствует.");
                 return;
             }
-            const paymentLink = "https://example.com/payment";
-            const message = `Для оплаты перейдите по ссылке: [Оплатить](${paymentLink})`;
+            const userId = BigInt(ctx.from.id);
+            const orderId = `order_${userId}_${Date.now()}`;
+            // Формирование ссылки на оплату
+            const paymentLink = `${config_1.config.paymentUrl}?order_id=${orderId}&user_id=${userId}&do=pay`;
+            const message = `💳 *Оплата мероприятия*\n\n` +
+                `Для оплаты перейдите по ссылке: [Оплатить](${paymentLink})`;
             try {
-                yield ctx.reply(message, { parse_mode: "MarkdownV2" });
+                yield __1.prisma.payment.create({
+                    data: {
+                        userId,
+                        orderId,
+                        amount: config_1.config.amount || 2000,
+                        status: client_1.PaymentStatus.PENDING,
+                        paymentMethod: null,
+                    },
+                });
+                yield ctx.reply(message, Object.assign({ parse_mode: "MarkdownV2" }, telegraf_1.Markup.inlineKeyboard([
+                    [telegraf_1.Markup.button.url("💳 Оплатить", paymentLink)],
+                ])));
+                logger_1.logger.info(`📩 Ссылка на оплату отправлена пользователю ${userId}.`);
             }
             catch (tgError) {
-                logger_1.logger.error("Ошибка при отправке ссылки на оплату:", tgError);
+                logger_1.logger.error("❌ Ошибка при отправке ссылки на оплату:", tgError);
             }
             try {
                 yield ctx.answerCbQuery();
             }
             catch (tgError) {
-                logger_1.logger.warn("Ошибка при answerCbQuery:", tgError);
+                logger_1.logger.warn("⚠️ Ошибка при answerCbQuery:", tgError);
             }
-            logger_1.logger.info(`Пользователь ${ctx.from.id} (${ctx.from.username}) нажал кнопку "Оплатить".`);
         }));
     }));
     bot.action("send_announcement", (ctx) => __awaiter(this, void 0, void 0, function* () {
@@ -115,8 +129,7 @@ function setupStartCommand(bot) {
                 return;
             }
             try {
-                // Запрос к Strapi API
-                const response = yield fetch("http://83.220.168.3:1337/api/announcements");
+                const response = yield fetch(`${config_1.config.strapiUrl}/announcements`);
                 if (!response.ok)
                     throw new Error(`Ошибка API: ${response.statusText}`);
                 const data = yield response.json();
@@ -154,23 +167,23 @@ function setupStartCommand(bot) {
                     minute: "2-digit",
                     hour12: true,
                 });
-                const escapeMarkdownV2 = (text) => {
+                const escapeMD = (text) => {
                     return text.replace(/([_*[\]()~`>#+\-=|{}.!\\])/g, "\\$1");
                 };
                 let message = `📅 *Ближайшее мероприятие*\n\n` +
-                    `👉 *Тема:* ${escapeMarkdownV2(nextEvent.title)}\n` +
-                    `⏱️ *Дата:* ${escapeMarkdownV2(formatDateTime(nextEvent.date))}\n`;
+                    `👉 *Тема:* ${escapeMD(nextEvent.title)}\n` +
+                    `⏱️ *Дата:* ${escapeMD(formatDateTime(nextEvent.date))}\n`;
                 if (nextEvent.content) {
-                    message += `📢 ${escapeMarkdownV2(nextEvent.content)}\n`;
+                    message += `📢 ${escapeMD(nextEvent.content)}\n`;
                 }
                 if (otherEvents.length > 0) {
                     message += `\n\n💼 *Другие мероприятия*\n`;
                     otherEvents.forEach((event) => {
                         message +=
-                            `\n👉 *Тема:* ${escapeMarkdownV2(event.title)}\n` +
-                                `⏱️ *Дата:* ${escapeMarkdownV2(formatDateTime(event.date))}\n`;
+                            `\n👉 *Тема:* ${escapeMD(event.title)}\n` +
+                                `⏱️ *Дата:* ${escapeMD(formatDateTime(event.date))}\n`;
                         if (event.content) {
-                            message += `📢 ${escapeMarkdownV2(event.content)}\n`;
+                            message += `📢 ${escapeMD(event.content)}\n`;
                         }
                     });
                 }

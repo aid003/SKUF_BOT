@@ -1,0 +1,340 @@
+[2025-03-14T12:00:15.532] [INFO] default - Бот успешно запущен на порту 5000
+[2025-03-14T12:00:56.568] [INFO] default - Бот успешно запущен на порту 5000
+[2025-03-14T12:00:59.069] [INFO] default - Бот успешно запущен на порту 5000
+[2025-03-14T12:01:04.087] [INFO] default - Пользователь 2099914999 (GMTUSDT) запустил бота.
+[2025-03-14T12:01:10.698] [INFO] default - Пользователь 2099914999 (GMTUSDT) запросил анонс программы.
+[2025-03-14T12:01:12.079] [INFO] default - Пользователь 2099914999 (GMTUSDT) нажал кнопку "Оплатить".
+[2025-03-15T09:08:26.821] [INFO] default - Бот успешно запущен на порту 5000
+[2025-03-15T09:08:45.311] [INFO] default - Новый пользователь: ID=2099914999 (GMTUSDT).
+[2025-03-15T09:27:02.791] [INFO] default - Бот успешно запущен на порту 5000
+[2025-03-15T09:27:06.778] [INFO] default - Новый пользователь: ID=2099914999 (GMTUSDT).
+[2025-03-15T09:27:41.773] [INFO] default - Пользователь повторно запустил /start: ID=2099914999 (GMTUSDT).
+[2025-03-15T09:46:51.916] [INFO] default - Бот успешно запущен на порту 5000
+[2025-03-15T09:47:08.410] [INFO] default - Новый пользователь: ID=7136261869 (Artem_Bryantsev).
+[2025-03-15T09:47:19.274] [INFO] default - Новый пользователь: ID=7333691218 (NoirArtem).
+[2025-03-15T09:48:46.837] [INFO] default - Бот успешно запущен на порту 5000
+[2025-03-15T09:51:58.195] [INFO] default - Новый пользователь: ID=7277030216 (cristyman).
+[2025-03-15T09:54:09.141] [INFO] default - Рассылка: админ=2099914999, тип=photo, пользователей=2, оценка=6s
+[2025-03-15T09:54:10.466] [INFO] default - Рассылка завершена: всего=2, success=2, fail=0, time=1сек.
+[2025-03-15T09:55:21.048] [INFO] default - Бот успешно запущен на порту 5000
+[2025-03-15T09:56:09.292] [INFO] default - Рассылка: админ=2099914999, тип=text, пользователей=2, оценка=6s
+[2025-03-15T09:56:11.225] [INFO] default - Рассылка завершена: всего=2, success=2, fail=0, time=2сек.
+[2025-03-15T10:01:50.386] [INFO] default - Бот успешно запущен на порту 5000
+[2025-03-15T10:02:08.523] [INFO] default - Рассылка: админ=2099914999, тип=text, пользователей=2, оценка=6s
+[2025-03-15T10:02:09.849] [INFO] default - Рассылка завершена: всего=2, success=2, fail=0, time=1сек.
+[2025-03-15T10:15:00.194] [INFO] default - Бот успешно запущен на порту 5000
+[2025-03-15T10:17:26.459] [INFO] default - Пользователь повторно запустил /start: ID=2099914999 (GMTUSDT).
+[2025-03-15T10:17:36.922] [INFO] default - Пользователь 2099914999 (GMTUSDT) запросил анонс программы.
+[2025-03-15T11:54:47.743] [INFO] default - Бот успешно запущен на порту 5000
+[2025-03-15T11:54:52.700] [INFO] default - Пользователь повторно запустил /start: ID=2099914999 (GMTUSDT).
+[2025-03-15T11:54:54.321] [ERROR] default - Ошибка при получении анонсов: TypeError: Cannot read properties of undefined (reading 'title')
+    at C:\Users\admin\Desktop\PROJECTS\SKUF_BOT\src\commands\start.command.ts:152:38
+    at Array.map (<anonymous>)
+    at C:\Users\admin\Desktop\PROJECTS\SKUF_BOT\src\commands\start.command.ts:148:12
+    at Generator.next (<anonymous>)
+    at fulfilled (C:\Users\admin\Desktop\PROJECTS\SKUF_BOT\src\commands\start.command.ts:5:58)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2025-03-15T11:58:23.957] [INFO] default - Бот успешно запущен на порту 5000
+[2025-03-15T11:58:27.495] [INFO] default - Ответ от Strapi: {
+  "data": [
+    {
+      "id": 2,
+      "documentId": "d0xcehv5to73ti8vzso16v8e",
+      "title": "Как выйти на новый уровень продаж.",
+      "content": "Это описание",
+      "date": "2025-03-18T16:40:00.000Z",
+      "createdAt": "2025-03-15T08:37:22.102Z",
+      "updatedAt": "2025-03-15T08:37:33.949Z",
+      "publishedAt": "2025-03-15T08:37:33.973Z",
+      "locale": "en"
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "page": 1,
+      "pageSize": 25,
+      "pageCount": 1,
+      "total": 1
+    }
+  }
+}
+[2025-03-15T11:58:27.496] [WARN] default - Некорректный объект анонса: {"id":2,"documentId":"d0xcehv5to73ti8vzso16v8e","title":"Как выйти на новый уровень продаж.","content":"Это описание","date":"2025-03-18T16:40:00.000Z","createdAt":"2025-03-15T08:37:22.102Z","updatedAt":"2025-03-15T08:37:33.949Z","publishedAt":"2025-03-15T08:37:33.973Z","locale":"en"}
+[2025-03-15T11:58:27.578] [ERROR] default - Ошибка при получении анонсов: TelegramError: 400: Bad Request: can't parse entities: Character '.' is reserved and must be escaped with the preceding '\'
+    at Telegram.callApi (C:\Users\admin\Desktop\PROJECTS\SKUF_BOT\node_modules\.pnpm\telegraf@4.16.3\node_modules\telegraf\lib\core\network\client.js:315:19)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  response: {
+    ok: false,
+    error_code: 400,
+    description: "Bad Request: can't parse entities: Character '.' is reserved and must be escaped with the preceding '\\'"
+  },
+  on: {
+    method: 'sendMessage',
+    payload: {
+      chat_id: 2099914999,
+      message_thread_id: undefined,
+      parse_mode: 'MarkdownV2',
+      text: '❌ Нет доступных мероприятий.'
+    }
+  }
+}
+[2025-03-15T12:00:38.351] [INFO] default - Бот успешно запущен на порту 5000
+[2025-03-15T12:00:41.823] [INFO] default - Ответ от Strapi: {
+  "data": [
+    {
+      "id": 2,
+      "documentId": "d0xcehv5to73ti8vzso16v8e",
+      "title": "Как выйти на новый уровень продаж.",
+      "content": "Это описание",
+      "date": "2025-03-18T16:40:00.000Z",
+      "createdAt": "2025-03-15T08:37:22.102Z",
+      "updatedAt": "2025-03-15T08:37:33.949Z",
+      "publishedAt": "2025-03-15T08:37:33.973Z",
+      "locale": "en"
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "page": 1,
+      "pageSize": 25,
+      "pageCount": 1,
+      "total": 1
+    }
+  }
+}
+[2025-03-15T12:03:08.237] [INFO] default - Бот успешно запущен на порту 5000
+[2025-03-15T12:03:24.688] [INFO] default - Ответ от Strapi: {
+  "data": [
+    {
+      "id": 2,
+      "documentId": "d0xcehv5to73ti8vzso16v8e",
+      "title": "Как выйти на новый уровень продаж.",
+      "content": "Это описание",
+      "date": "2025-03-18T16:40:00.000Z",
+      "createdAt": "2025-03-15T08:37:22.102Z",
+      "updatedAt": "2025-03-15T08:37:33.949Z",
+      "publishedAt": "2025-03-15T08:37:33.973Z",
+      "locale": "en"
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "page": 1,
+      "pageSize": 25,
+      "pageCount": 1,
+      "total": 1
+    }
+  }
+}
+[2025-03-15T12:04:11.802] [INFO] default - Ответ от Strapi: {
+  "data": [
+    {
+      "id": 2,
+      "documentId": "d0xcehv5to73ti8vzso16v8e",
+      "title": "Как выйти на новый уровень продаж.",
+      "content": "Это описание",
+      "date": "2025-03-18T16:40:00.000Z",
+      "createdAt": "2025-03-15T08:37:22.102Z",
+      "updatedAt": "2025-03-15T08:37:33.949Z",
+      "publishedAt": "2025-03-15T08:37:33.973Z",
+      "locale": "en"
+    },
+    {
+      "id": 4,
+      "documentId": "gflderjkpl6lo4jnvfsair8r",
+      "title": "Это 2 ивент",
+      "content": null,
+      "date": "2025-03-16T21:45:00.000Z",
+      "createdAt": "2025-03-15T09:04:03.743Z",
+      "updatedAt": "2025-03-15T09:04:03.743Z",
+      "publishedAt": "2025-03-15T09:04:03.778Z",
+      "locale": "en"
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "page": 1,
+      "pageSize": 25,
+      "pageCount": 1,
+      "total": 2
+    }
+  }
+}
+[2025-03-15T12:10:16.193] [INFO] default - Бот успешно запущен на порту 5000
+[2025-03-15T12:10:31.340] [INFO] default - Ответ от Strapi: {
+  "data": [
+    {
+      "id": 2,
+      "documentId": "d0xcehv5to73ti8vzso16v8e",
+      "title": "Как выйти на новый уровень продаж.",
+      "content": "Это описание",
+      "date": "2025-03-18T16:40:00.000Z",
+      "createdAt": "2025-03-15T08:37:22.102Z",
+      "updatedAt": "2025-03-15T08:37:33.949Z",
+      "publishedAt": "2025-03-15T08:37:33.973Z",
+      "locale": "en"
+    },
+    {
+      "id": 4,
+      "documentId": "gflderjkpl6lo4jnvfsair8r",
+      "title": "Это 2 ивент",
+      "content": null,
+      "date": "2025-03-16T21:45:00.000Z",
+      "createdAt": "2025-03-15T09:04:03.743Z",
+      "updatedAt": "2025-03-15T09:04:03.743Z",
+      "publishedAt": "2025-03-15T09:04:03.778Z",
+      "locale": "en"
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "page": 1,
+      "pageSize": 25,
+      "pageCount": 1,
+      "total": 2
+    }
+  }
+}
+[2025-03-15T12:11:16.482] [INFO] default - Бот успешно запущен на порту 5000
+[2025-03-15T12:11:23.472] [INFO] default - Пользователь повторно запустил /start: ID=2099914999 (GMTUSDT).
+[2025-03-15T12:11:26.645] [INFO] default - Ответ от Strapi: {
+  "data": [
+    {
+      "id": 2,
+      "documentId": "d0xcehv5to73ti8vzso16v8e",
+      "title": "Как выйти на новый уровень продаж.",
+      "content": "Это описание",
+      "date": "2025-03-18T16:40:00.000Z",
+      "createdAt": "2025-03-15T08:37:22.102Z",
+      "updatedAt": "2025-03-15T08:37:33.949Z",
+      "publishedAt": "2025-03-15T08:37:33.973Z",
+      "locale": "en"
+    },
+    {
+      "id": 4,
+      "documentId": "gflderjkpl6lo4jnvfsair8r",
+      "title": "Это 2 ивент",
+      "content": null,
+      "date": "2025-03-16T21:45:00.000Z",
+      "createdAt": "2025-03-15T09:04:03.743Z",
+      "updatedAt": "2025-03-15T09:04:03.743Z",
+      "publishedAt": "2025-03-15T09:04:03.778Z",
+      "locale": "en"
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "page": 1,
+      "pageSize": 25,
+      "pageCount": 1,
+      "total": 2
+    }
+  }
+}
+[2025-03-15T12:14:46.226] [INFO] default - Бот успешно запущен на порту 5000
+[2025-03-15T12:14:52.741] [INFO] default - Пользователь повторно запустил /start: ID=2099914999 (GMTUSDT).
+[2025-03-15T12:14:54.412] [INFO] default - Ответ от Strapi: {
+  "data": [
+    {
+      "id": 2,
+      "documentId": "d0xcehv5to73ti8vzso16v8e",
+      "title": "Как выйти на новый уровень продаж.",
+      "content": "Это описание",
+      "date": "2025-03-18T16:40:00.000Z",
+      "createdAt": "2025-03-15T08:37:22.102Z",
+      "updatedAt": "2025-03-15T08:37:33.949Z",
+      "publishedAt": "2025-03-15T08:37:33.973Z",
+      "locale": "en"
+    },
+    {
+      "id": 4,
+      "documentId": "gflderjkpl6lo4jnvfsair8r",
+      "title": "Это 2 ивент",
+      "content": null,
+      "date": "2025-03-16T21:45:00.000Z",
+      "createdAt": "2025-03-15T09:04:03.743Z",
+      "updatedAt": "2025-03-15T09:04:03.743Z",
+      "publishedAt": "2025-03-15T09:04:03.778Z",
+      "locale": "en"
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "page": 1,
+      "pageSize": 25,
+      "pageCount": 1,
+      "total": 2
+    }
+  }
+}
+[2025-03-15T12:27:33.819] [INFO] default - Ответ от Strapi: {
+  "data": [
+    {
+      "id": 2,
+      "documentId": "d0xcehv5to73ti8vzso16v8e",
+      "title": "Как выйти на новый уровень продаж.",
+      "content": "Это описание",
+      "date": "2025-03-18T16:40:00.000Z",
+      "createdAt": "2025-03-15T08:37:22.102Z",
+      "updatedAt": "2025-03-15T08:37:33.949Z",
+      "publishedAt": "2025-03-15T08:37:33.973Z",
+      "locale": "en"
+    },
+    {
+      "id": 5,
+      "documentId": "gflderjkpl6lo4jnvfsair8r",
+      "title": "Тот самый маркетолог на Маркетах",
+      "content": null,
+      "date": "2025-03-16T21:45:00.000Z",
+      "createdAt": "2025-03-15T09:04:03.743Z",
+      "updatedAt": "2025-03-15T09:27:20.394Z",
+      "publishedAt": "2025-03-15T09:27:20.416Z",
+      "locale": "en"
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "page": 1,
+      "pageSize": 25,
+      "pageCount": 1,
+      "total": 2
+    }
+  }
+}
+[2025-03-15T12:28:47.852] [INFO] default - Ответ от Strapi: {
+  "data": [
+    {
+      "id": 2,
+      "documentId": "d0xcehv5to73ti8vzso16v8e",
+      "title": "Как выйти на новый уровень продаж.",
+      "content": "Это описание",
+      "date": "2025-03-18T16:40:00.000Z",
+      "createdAt": "2025-03-15T08:37:22.102Z",
+      "updatedAt": "2025-03-15T08:37:33.949Z",
+      "publishedAt": "2025-03-15T08:37:33.973Z",
+      "locale": "en"
+    },
+    {
+      "id": 5,
+      "documentId": "gflderjkpl6lo4jnvfsair8r",
+      "title": "Тот самый маркетолог на Маркетах",
+      "content": null,
+      "date": "2025-03-16T21:45:00.000Z",
+      "createdAt": "2025-03-15T09:04:03.743Z",
+      "updatedAt": "2025-03-15T09:27:20.394Z",
+      "publishedAt": "2025-03-15T09:27:20.416Z",
+      "locale": "en"
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "page": 1,
+      "pageSize": 25,
+      "pageCount": 1,
+      "total": 2
+    }
+  }
+}
+[2025-03-15T12:30:22.168] [INFO] default - Бот успешно запущен на порту 5000
+[2025-03-15T12:30:27.076] [INFO] default - Пользователь повторно запустил /start: ID=2099914999 (GMTUSDT).
+[2025-03-15T12:30:33.928] [INFO] default - Пользователь 2099914999 (GMTUSDT) нажал кнопку "Оплатить".
+[2025-03-15T12:31:16.847] [INFO] default - Бот успешно запущен на порту 5000

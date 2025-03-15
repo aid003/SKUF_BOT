@@ -3,8 +3,8 @@ import { config } from "./config";
 import { setupCommands } from "./commands";
 import { setupBroadcast } from "./broadcast/broadcast";
 import { logger } from "./logger/logger";
-import { PrismaClient } from "@prisma/client";
 import "./server";
+import { PrismaClient } from "@prisma/client";
 
 if (!config.botToken) {
   logger.error("BOT_TOKEN не найден в конфигурации");

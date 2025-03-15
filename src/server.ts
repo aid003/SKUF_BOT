@@ -60,7 +60,7 @@ app.post(
 
       let userId = extractUserId(order_num);
 
-      if (!order_id || !sum || !payment_status || !userId) {
+      if (!order_id || !sum || !payment_status || !userId || !order_num) {
         logger.warn(
           "⚠️ Некорректные данные в запросе (отсутствуют ключевые поля)."
         );
@@ -69,7 +69,6 @@ app.post(
       }
 
       const parsedAmount = parseFloat(sum);
-
       if (isNaN(parsedAmount)) {
         logger.error(`❌ Ошибка конвертации sum: ${sum}`);
         res.status(400).send("Invalid sum format");
@@ -89,34 +88,35 @@ app.post(
 
       const paymentMethodEnum = mapPaymentMethod(payment_type);
 
-      const existingPayment = await prisma.payment.findUnique({
-        where: { orderId: order_id },
+      // 🛑 Проверяем по `order_num`, а не `order_id`
+      const existingPayment = await prisma.payment.findFirst({
+        where: { orderId: order_num }, // Ищем по order_num
       });
 
       if (existingPayment && existingPayment.status === "SUCCESS") {
         logger.info(
-          `✅ Оплата ${order_id} уже подтверждена, сообщение не отправляется.`
+          `✅ Оплата ${order_num} уже подтверждена, сообщение не отправляется.`
         );
         res.sendStatus(200);
         return;
       }
 
       await prisma.payment.upsert({
-        where: { orderId: order_id },
+        where: { orderId: order_num }, // Теперь привязываем `order_num`
         update: {
           status: payment_status.toUpperCase() as PaymentStatus,
           paymentMethod: paymentMethodEnum,
         },
         create: {
           userId: userIdBigInt,
-          orderId: order_id,
+          orderId: order_num, // Сохраняем `order_num`, а не `order_id`
           amount: parsedAmount,
           status: payment_status.toUpperCase() as PaymentStatus,
           paymentMethod: paymentMethodEnum,
         },
       });
 
-      logger.info(`✅ Оплата ${order_id} обновлена: ${payment_status}`);
+      logger.info(`✅ Оплата ${order_num} обновлена: ${payment_status}`);
 
       if (
         payment_status.toLowerCase() === "success" &&

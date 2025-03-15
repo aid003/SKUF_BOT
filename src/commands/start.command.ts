@@ -86,9 +86,9 @@ export function setupStartCommand(bot: Telegraf) {
     });
   });
 
-  /**
-   * Блок «Оплаты»: поправлен, чтобы передавать сумму в форму Продамуса через products.
-   */
+  // -------------------------------------------------------------
+  // ИЗМЕНЁННЫЙ БЛОК "pay": передаём order_sum и do=link
+  // -------------------------------------------------------------
   bot.action("pay", async (ctx) => {
     await safeExecute(ctx, async () => {
       if (!ctx.from) {
@@ -96,38 +96,36 @@ export function setupStartCommand(bot: Telegraf) {
         return;
       }
 
-      // Пусть сумма берётся из конфига или по умолчанию 2000:
       const userId = BigInt(ctx.from.id);
       const orderId = `order_${userId}_${Date.now()}`;
-      const price = config.amount ? Number(config.amount) : 2000;
+      // Берём сумму либо из config, либо по умолчанию 100:
+      const price = config.amount ? Number(config.amount) : 100;
 
-      // Формируем ссылку с указанием цены, количества и названия товара.
-      // Пример:
-      //   https://your-subdomain.payform.ru/?order_id=...&user_id=...&products[0][price]=2000&products[0][quantity]=1&products[0][name]=Оплата+мероприятия&do=pay
+      // Формируем ссылку с order_sum=... и do=link,
+      // чтобы НЕ перескакивать первый экран с контактами.
       const paymentLink =
-        `${config.paymentUrl}?order_id=${orderId}&user_id=${userId}` +
-        `&products[0][price]=${price}` +
-        `&products[0][quantity]=1` +
-        `&products[0][name]=ОплатаМероприятия` +
-        `&do=pay`;
+        `${config.paymentUrl}?order_id=${orderId}` +
+        `&user_id=${userId}` +
+        `&order_sum=${price}` +
+        `&do=link`;
 
       const message =
         `💳 *Оплата мероприятия*\n\n` +
         `Для оплаты перейдите по ссылке: [Оплатить](${paymentLink})`;
 
-      // Сохраняем предварительную запись о платеже в БД
+      // Создаём запись о платеже в БД
       try {
         await prisma.payment.create({
           data: {
             userId,
             orderId,
-            amount: price, // сохраняем цену
+            amount: price,
             status: PaymentStatus.PENDING,
             paymentMethod: null,
           },
         });
 
-        // Отправляем сообщение со ссылкой
+        // Отправляем ссылку
         await ctx.reply(message, {
           parse_mode: "MarkdownV2",
           ...Markup.inlineKeyboard([
@@ -135,9 +133,14 @@ export function setupStartCommand(bot: Telegraf) {
           ]),
         });
 
-        logger.info(`📩 Ссылка на оплату отправлена пользователю ${userId}.`);
+        logger.info(
+          `📩 Ссылка на оплату (do=link) отправлена пользователю ${userId}.`
+        );
       } catch (tgError: any) {
-        logger.error("❌ Ошибка при отправке ссылки на оплату:", tgError);
+        logger.error(
+          "❌ Ошибка при создании платежа или отправке ссылки:",
+          tgError
+        );
       }
 
       // Закрываем "часики" на кнопке

@@ -1,20 +1,20 @@
 import express, { Request, Response, Application } from "express";
-import bodyParser from "body-parser";
 import { PaymentStatus, PaymentMethod } from "@prisma/client";
-import dotenv from "dotenv";
 import crypto from "crypto";
 import cors from "cors";
 import { config } from "./config";
 import { bot, prisma } from ".";
 import { logger } from "./logger/logger";
 
-dotenv.config();
-
 const app: Application = express();
 
-app.use(bodyParser.json());
+// Используем express.raw(), чтобы получить оригинальное тело запроса
+app.use(express.raw({ type: "*/*" }));
 app.use(cors());
 
+/**
+ * 🔹 Функция маппинга методов оплаты из Продамус в наше перечисление
+ */
 function mapPaymentMethod(
   prodamusMethod: string | undefined
 ): PaymentMethod | null {
@@ -26,41 +26,37 @@ function mapPaymentMethod(
     case "ackz":
     case "acf":
       return PaymentMethod.CARD;
-
     case "sbp":
       return PaymentMethod.SBP;
-
     case "qw":
     case "qiwi":
       return PaymentMethod.QIWI;
-
     case "pc":
     case "yandex":
       return PaymentMethod.YANDEX;
-
     case "paypal":
       return PaymentMethod.PAYPAL;
-
     case "crypto":
       return PaymentMethod.CRYPTO;
-
     default:
-      logger.warn(`Неизвестный payment_method из Продамуса: ${prodamusMethod}`);
+      logger.warn(
+        `⚠️ Неизвестный payment_method из Продамуса: ${prodamusMethod}`
+      );
       return null;
   }
 }
 
+/**
+ * 🔹 Функция проверки подписи HMAC
+ */
 const verifySignature = (
-  data: any,
+  rawBody: string,
   secretKey: string,
   signature: string
 ): boolean => {
   try {
     const hmac = crypto.createHmac("sha256", secretKey);
-
-    const jsonData = JSON.stringify(data, Object.keys(data).sort());
-    hmac.update(Buffer.from(jsonData, "utf8"));
-
+    hmac.update(rawBody, "utf8"); // Используем оригинальное тело запроса
     const computedSignature = hmac.digest("hex");
 
     if (computedSignature !== signature) {
@@ -77,28 +73,31 @@ const verifySignature = (
   }
 };
 
+/**
+ * 🔹 Обработка webhook оплаты от Продамус
+ */
 app.post(
   "/webhook/payment",
   async (req: Request<{}, {}, any>, res: Response): Promise<void> => {
     try {
-      logger.info(
-        "📩 Получены данные вебхука:",
-        JSON.stringify(req.body, null, 2)
-      );
       const secretKey = config.secretKey!;
       const signatureHeader =
         (req.headers["sign"] as string) || (req.headers["Sign"] as string);
 
       if (
         !signatureHeader ||
-        !verifySignature(req.body, secretKey, signatureHeader)
+        !verifySignature(req.body.toString("utf8"), secretKey, signatureHeader)
       ) {
         logger.warn("⚠️ Ошибка верификации подписи запроса.");
         res.status(400).send("Invalid signature");
         return;
       }
 
-      const { order_id, amount, status, user_id, payment_method } = req.body;
+      const rawBody = req.body.toString("utf8"); // Получаем оригинальное тело запроса
+      logger.info("📩 Получены данные вебхука (RAW):", rawBody);
+
+      const data = JSON.parse(rawBody);
+      const { order_id, amount, status, user_id, payment_method } = data;
 
       if (!order_id || !amount || !status || !user_id) {
         logger.warn(
@@ -115,9 +114,7 @@ app.post(
       }
 
       const userId = BigInt(user_id);
-
-      const parsedAmount =
-        typeof amount === "string" ? parseFloat(amount) : amount;
+      const parsedAmount = parseFloat(amount);
 
       if (isNaN(parsedAmount)) {
         logger.error(`❌ Ошибка конвертации amount: ${amount}`);
@@ -198,6 +195,9 @@ app.post(
   }
 );
 
+/**
+ * 🔹 Запуск сервера
+ */
 app.listen(config.port, () => {
   logger.info(`🚀 Webhook сервер запущен на порту ${config.port}`);
 });

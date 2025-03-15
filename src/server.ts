@@ -57,9 +57,20 @@ const verifySignature = (
 ): boolean => {
   try {
     const hmac = crypto.createHmac("sha256", secretKey);
-    hmac.update(JSON.stringify(data));
+
+    const jsonData = JSON.stringify(data, Object.keys(data).sort());
+    hmac.update(Buffer.from(jsonData, "utf8"));
+
     const computedSignature = hmac.digest("hex");
-    return computedSignature === signature;
+
+    if (computedSignature !== signature) {
+      logger.warn(`⚠️ Подписи не совпадают! 
+      Ожидалось: ${signature} 
+      Получено: ${computedSignature}`);
+      return false;
+    }
+
+    return true;
   } catch (error) {
     logger.error("❌ Ошибка генерации HMAC:", error);
     return false;

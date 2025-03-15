@@ -5,11 +5,6 @@ import { safeExecute } from "../helpers/safeExecute";
 import { prisma } from "..";
 import { config } from "../config";
 import { PaymentStatus } from "@prisma/client";
-// Импортируем node-fetch (или другую библиотеку), если в вашей версии Node.js нет глобального fetch
-import fetch from "node-fetch";
-
-// Если нужно — функция для HMAC-подписи (если в вашем Продамусе обязательна подпись).
-import crypto from "crypto";
 
 export function setupStartCommand(bot: Telegraf) {
   bot.start(async (ctx) => {
@@ -91,13 +86,9 @@ export function setupStartCommand(bot: Telegraf) {
     });
   });
 
-  /**
-   * При клике на "Оплатить":
-   * 1) Генерируем уникальный orderId
-   * 2) Делаем запрос POST к Продамусу с do=link, чтобы вернулся короткий URL
-   * 3) Сохраняем платёж в БД (статус PENDING)
-   * 4) Отправляем пользователю короткую ссылку
-   */
+  // -------------------------------------------------------------
+  // ИЗМЕНЁННЫЙ БЛОК "pay": передаём order_sum и do=link
+  // -------------------------------------------------------------
   bot.action("pay", async (ctx) => {
     await safeExecute(ctx, async () => {
       if (!ctx.from) {
@@ -107,85 +98,20 @@ export function setupStartCommand(bot: Telegraf) {
 
       const userId = BigInt(ctx.from.id);
       const orderId = `order_${userId}_${Date.now()}`;
-      const price = config.amount ? Number(config.amount) : 2000;
+      // Берём сумму либо из config, либо по умолчанию 100:
+      const price = config.amount ? Number(config.amount) : 100;
 
-      // Подготовим данные для Продамуса.
-      // В зависимости от требований вам могут понадобиться:
-      // - products (массив товаров),
-      // - order_id, user_id,
-      // - do=link,
-      // - type=json,
-      // - callbackType=json,
-      // - возможно, signature (HMAC).
-      const prodamusPayload: any = {
-        do: "link",
-        type: "json", // чтобы ответ пришел в JSON
-        // callbackType: "json",  // иногда нужно и это
-        order_id: orderId, // вам нужно сопоставлять в вебхуке
-        products: [
-          {
-            name: "Оплата мероприятия",
-            price: price,
-            quantity: 1,
-          },
-        ],
-        // user_id: userId, // если нужно в форме
-        // ... другие поля (phone, email) по желанию
-      };
+      // Формируем ссылку с order_sum=... и do=link,
+      // чтобы НЕ перескакивать первый экран с контактами.
+      const paymentLink =
+        `${config.paymentUrl}?order_id=${orderId}` +
+        `&user_id=${userId}` +
+        `&order_sum=${price}` +
+        `&do=pay`;
 
-      // --- Опционально: подпись HMAC, если включена в Продамусе
-      if (process.env.PRODAMUS_SECRET_KEY) {
-        // Пример простейшей генерации подписи
-        const secret = process.env.PRODAMUS_SECRET_KEY;
-        const sortedKeys = Object.keys(prodamusPayload).sort();
-        const dataString = sortedKeys
-          .map((k) => `${k}=${JSON.stringify(prodamusPayload[k])}`)
-          .join("&");
-
-        const hmac = crypto.createHmac("sha256", secret!);
-        hmac.update(dataString);
-        const signature = hmac.digest("hex");
-
-        prodamusPayload.signature = signature;
-      }
-
-      // Отправляем запрос POST на config.paymentUrl
-      // Примерно так:
-      let paymentLink: string | undefined = undefined;
-      try {
-        const response = await fetch(config.paymentUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(prodamusPayload),
-        });
-
-        if (!response.ok) {
-          const textBody = await response.text();
-          throw new Error(
-            `Запрос к Продамусу не успешен: ${response.status} / ${textBody}`
-          );
-        }
-
-        const data = await response.json();
-        // Предположим, что Продамус вернёт что-то вроде { "link": "https://payform.ru/nj6H3Oq/" }
-        if (!data.link) {
-          throw new Error("В ответе отсутствует поле link");
-        }
-
-        paymentLink = data.link;
-      } catch (err) {
-        logger.error(
-          "❌ Ошибка при получении короткой ссылки от Продамуса:",
-          err
-        );
-        // Можно уведомить пользователя
-        await ctx.reply(
-          "Произошла ошибка при генерации ссылки на оплату. Попробуйте позже."
-        );
-        return;
-      }
+      const message =
+        `💳 *Оплата мероприятия*\n\n` +
+        `Для оплаты перейдите по ссылке: [Оплатить](${paymentLink})`;
 
       // Создаём запись о платеже в БД
       try {
@@ -198,35 +124,26 @@ export function setupStartCommand(bot: Telegraf) {
             paymentMethod: null,
           },
         });
-        logger.info(`Создана запись о платеже ${orderId} (PENDING)`);
-      } catch (dbError: any) {
-        logger.error("❌ Ошибка при создании записи в БД:", dbError);
-        // Сообщаем об ошибке, если нужно
+
+        // Отправляем ссылку
+        await ctx.reply(message, {
+          parse_mode: "MarkdownV2",
+          ...Markup.inlineKeyboard([
+            [Markup.button.url("💳 Оплатить", paymentLink)],
+          ]),
+        });
+
+        logger.info(
+          `📩 Ссылка на оплату (do=link) отправлена пользователю ${userId}.`
+        );
+      } catch (tgError: any) {
+        logger.error(
+          "❌ Ошибка при создании платежа или отправке ссылки:",
+          tgError
+        );
       }
 
-      // Отправляем пользователю ссылку
-      // Если внутри Telegram откроется пустой экран — он может скопировать ссылку
-      if (paymentLink) {
-        const msg =
-          `💳 *Оплата мероприятия*\n\n` +
-          `Короткая ссылка на оплату: [${paymentLink}](${paymentLink})\n\n` +
-          `Если внутри Telegram ссылка открывается пустой страницей, скопируйте её и вставьте в браузере.`;
-
-        try {
-          await ctx.reply(msg, {
-            parse_mode: "MarkdownV2",
-            ...Markup.inlineKeyboard([
-              [Markup.button.url("💳 Оплатить", paymentLink)],
-            ]),
-          });
-          logger.info(
-            `Короткая ссылка ${paymentLink} отправлена пользователю ${userId}`
-          );
-        } catch (tgError: any) {
-          logger.error("❌ Ошибка при отправке ссылки на оплату:", tgError);
-        }
-      }
-
+      // Закрываем "часики" на кнопке
       try {
         await ctx.answerCbQuery();
       } catch (tgError: any) {
@@ -272,7 +189,7 @@ export function setupStartCommand(bot: Telegraf) {
               content: item.content?.trim() || null,
             };
           })
-          .filter((a: Announcement): a is Announcement => a !== null)
+          .filter((a: Announcement | null): a is Announcement => a !== null)
           .sort(
             (a: Announcement, b: Announcement) =>
               a.date.getTime() - b.date.getTime()

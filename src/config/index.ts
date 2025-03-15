@@ -8,4 +8,5 @@ export const config = {
   port: process.env.PORT || 5000,
   databaseUrl: process.env.DATABASE_URL,
   broadcastLimit: Number(process.env.BROADCAST_LIMIT),
+  strapiUrl: process.env.STRAPI_URL
 };

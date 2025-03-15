@@ -3,17 +3,16 @@ import { escapeMarkdownV2 } from "../helpers/escapeMarkdownV2";
 import { logger } from "../logger/logger";
 import { safeExecute } from "../helpers/safeExecute";
 import { prisma } from "..";
+import { config } from "../config";
 
 export function setupStartCommand(bot: Telegraf) {
   bot.start(async (ctx) => {
     await safeExecute(ctx, async () => {
-      // Проверяем, что ctx.from существует
       if (!ctx.from) {
         logger.warn("ctx.from отсутствует при выполнении /start");
         return;
       }
 
-      // Собираем данные о пользователе
       const userData = {
         userId: BigInt(ctx.from.id),
         isBot: ctx.from.is_bot,
@@ -58,7 +57,6 @@ export function setupStartCommand(bot: Telegraf) {
         return;
       }
 
-      // Отправляем приветственное сообщение
       const safeFirstName = escapeMarkdownV2(ctx.from.first_name || "Гость");
       const message =
         `*${safeFirstName}*, на связи *Скуфы маркетинга*👋\n\n` +
@@ -125,10 +123,7 @@ export function setupStartCommand(bot: Telegraf) {
       }
 
       try {
-        // Запрос к Strapi API
-        const response = await fetch(
-          "http://83.220.168.3:1337/api/announcements"
-        );
+        const response = await fetch(`${config.strapiUrl}/announcements`);
         if (!response.ok) throw new Error(`Ошибка API: ${response.statusText}`);
 
         const data = await response.json();

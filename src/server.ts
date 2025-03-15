@@ -1,15 +1,22 @@
 import express, { Request, Response, Application } from "express";
 import { PaymentStatus, PaymentMethod } from "@prisma/client";
+import dotenv from "dotenv";
 import cors from "cors";
 import { config } from "./config";
 import { bot, prisma } from ".";
 import { logger } from "./logger/logger";
 
+dotenv.config();
+
 const app: Application = express();
 
-app.use(express.raw({ type: "*/*" }));
+// Используем express.urlencoded() вместо express.raw(), чтобы парсить application/x-www-form-urlencoded
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
+/**
+ * 🔹 Функция маппинга методов оплаты из Продамус в наше перечисление
+ */
 function mapPaymentMethod(
   prodamusMethod: string | undefined
 ): PaymentMethod | null {
@@ -41,17 +48,18 @@ function mapPaymentMethod(
   }
 }
 
+/**
+ * 🔹 Обработка webhook оплаты от Продамус (исправлено парсинг данных)
+ */
 app.post(
   "/webhook/payment",
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const rawBody = req.body.toString("utf8"); // Получаем оригинальное тело запроса
-      logger.info("📩 Получены данные вебхука (RAW):", rawBody);
+      logger.info("📩 Получены данные вебхука:", req.body);
 
-      const data = JSON.parse(rawBody);
-      const { order_id, amount, status, user_id, payment_method } = data;
+      const { order_id, sum, payment_status, user_id, payment_type } = req.body;
 
-      if (!order_id || !amount || !status || !user_id) {
+      if (!order_id || !sum || !payment_status || !user_id) {
         logger.warn(
           "⚠️ Некорректные данные в запросе (отсутствуют ключевые поля)."
         );
@@ -66,11 +74,11 @@ app.post(
       }
 
       const userId = BigInt(user_id);
-      const parsedAmount = parseFloat(amount);
+      const parsedAmount = parseFloat(sum);
 
       if (isNaN(parsedAmount)) {
-        logger.error(`❌ Ошибка конвертации amount: ${amount}`);
-        res.status(400).send("Invalid amount format");
+        logger.error(`❌ Ошибка конвертации sum: ${sum}`);
+        res.status(400).send("Invalid sum format");
         return;
       }
 
@@ -81,25 +89,25 @@ app.post(
         return;
       }
 
-      const paymentMethodEnum = mapPaymentMethod(payment_method);
+      const paymentMethodEnum = mapPaymentMethod(payment_type);
 
       try {
         await prisma.payment.upsert({
           where: { orderId: order_id },
           update: {
-            status: status.toUpperCase() as PaymentStatus,
+            status: payment_status.toUpperCase() as PaymentStatus,
             paymentMethod: paymentMethodEnum,
           },
           create: {
             userId,
             orderId: order_id,
             amount: parsedAmount,
-            status: status.toUpperCase() as PaymentStatus,
+            status: payment_status.toUpperCase() as PaymentStatus,
             paymentMethod: paymentMethodEnum,
           },
         });
 
-        logger.info(`✅ Оплата ${order_id} обновлена: ${status}`);
+        logger.info(`✅ Оплата ${order_id} обновлена: ${payment_status}`);
       } catch (dbError) {
         logger.error("❌ Ошибка записи в БД:", dbError);
         res.status(500).send("Database error");
@@ -107,7 +115,7 @@ app.post(
       }
 
       try {
-        if (status === "success") {
+        if (payment_status === "success") {
           await bot.telegram.sendMessage(
             user.userId.toString(),
             `✅ Оплата на сумму ${parsedAmount} RUB успешно прошла!\n\nСсылка на опросник...`
@@ -115,7 +123,7 @@ app.post(
           logger.info(
             `📩 Уведомление об успешной оплате отправлено пользователю ${userId}`
           );
-        } else if (status === "pending") {
+        } else if (payment_status === "pending") {
           await bot.telegram.sendMessage(
             user.userId.toString(),
             `⌛ Ваша оплата на сумму ${parsedAmount} RUB обрабатывается. Пожалуйста, дождитесь подтверждения!`
@@ -147,6 +155,9 @@ app.post(
   }
 );
 
+/**
+ * 🔹 Запуск сервера
+ */
 app.listen(config.port, () => {
   logger.info(`🚀 Webhook сервер запущен на порту ${config.port}`);
 });
